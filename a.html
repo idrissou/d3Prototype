@@ -134,8 +134,11 @@
                 // Log errors in json file
                 if (error) return console.warn(error);
 
-                xScale.domain([0, 3]);// d3.extent(graph.layout, function (d){ return d.x; })); //Temp fix for test_data.json
-                yScale.domain([0, 2]);//d3.extent(graph.layout, function (d){ return d.y; }));
+                // Get value range of data
+                var extentX = Math.abs(d3.max(graph.layout, function(d) { return d.x;}) - d3.min(graph.layout, function(d) { return d.x;}));
+                var extentY = Math.abs(d3.max(graph.layout, function(d) { return d.y;}) - d3.min(graph.layout, function(d) { return d.y;}));
+                xScale.domain([0, extentX]);// d3.extent(graph.layout, function (d){ return d.x; })); //Temp fix for test_data.json
+                yScale.domain([0, extentY]);//d3.extent(graph.layout, function (d){ return d.y; }));
 
             /*
               graph.links.forEach(function(d) {
