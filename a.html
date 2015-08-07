@@ -89,10 +89,8 @@ var node = nodeG.append("g")
     .selectAll("circle");
 
 // Scale
-//var xScale = d3.scale.linear().range([0, width]);
-var xScale = d3.scale.linear().domain([0,width]).range([0,width]);
-//var yScale = d3.scale.linear().range([height, 0]);
-var yScale = d3.scale.linear().domain([0,height]).range([0, height]);
+var xScale = d3.scale.linear().range([0, width]);
+var yScale = d3.scale.linear().range([0, height]);
 
 // Zoom
 var zoom = d3.behavior.zoom()
@@ -131,29 +129,13 @@ var brusher = d3.svg.brush()
 brush.call(brusher);
 
 
-// Dragging
-var drag = d3.behavior.drag()
-    .origin(function(d) { return d; })
-    .on("dragstart", function(d) {
-        d3.event.sourceEvent.stopPropagation();
-        d3.select(this).classed("dragging", true);
-    })
-    .on("drag", function(d) {
-        console.log(d);
-        d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
-    })
-    .on("dragend", function(d) {
-        d3.select(this).classed("dragging", false);
-    });
-
-
 // Data handling
-d3.json("data.json", function(error, graph) {
+d3.json("test_data.json", function(error, graph) {
     // Log errors in json file
     if (error) return console.warn(error);
 
-    //xScale.domain(d3.extent(graph.layout, function (d){ return d.x; }));
-    //yScale.domain(d3.extent(graph.layout, function (d){ return d.y; }));
+    xScale.domain([0, 3]);// d3.extent(graph.layout, function (d){ return d.x; })); //Temp fix for test_data.json
+    yScale.domain([0, 2]);//d3.extent(graph.layout, function (d){ return d.y; }));
 
 /*
   graph.links.forEach(function(d) {
@@ -173,8 +155,8 @@ d3.json("data.json", function(error, graph) {
 
     // Update
     node.attr("r", 4)
-      .attr("cx", function(d) { return d.x = d.x; })
-      .attr("cy", function(d) { return d.y = d.y; })
+      .attr("cx", function(d) { return xScale(d.x); })
+      .attr("cy", function(d) { return yScale(d.y); })
       .on("mousedown", function(d) {
       if (!d.selected) { // Don't deselect on shift-drag.
           if (!shiftKey) node.classed("selected", function(p) { return p.selected = d === p; });
@@ -186,14 +168,20 @@ d3.json("data.json", function(error, graph) {
         if (d.selected && shiftKey) d3.select(this).classed("selected", d.selected = false);
       })
       .call(d3.behavior.drag()
-            .on("drag", function(d) { nudge(d3.event.dx, d3.event.dy); }));
+            .on("dragstart", function(d) {
+                d3.event.sourceEvent.stopPropagation();
+            })
+            .on("drag", function(d) {
+                nudge(xScale.invert(d3.event.dx), yScale.invert(d3.event.dy));
+            })
+        );
 
 });
 
 function nudge(dx, dy) {
   node.filter(function(d) { return d.selected; })
-      .attr("cx", function(d) { return d.x += dx; })
-      .attr("cy", function(d) { return d.y += dy; })
+      .attr("cx", function(d) { d.x += dx; return xScale(d.x); })
+      .attr("cy", function(d) { d.y += dy; return yScale(d.y); })
 /*
   link.filter(function(d) { return d.source.selected; })
       .attr("x1", function(d) { return d.source.x; })
